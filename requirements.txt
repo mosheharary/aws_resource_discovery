@@ -1,0 +1,7 @@
+boto3 ~= 1.37.3
+packaging ~= 24.2
+neo4j==5.16.0
+pyyaml==6.0.1
+tqdm 
+pandas 
+openpyxl

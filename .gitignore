@@ -192,3 +192,61 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+CLAUDE.md
+.claude/
+.vscode/
+
+# AWS Discovery Tool Output
+aws-discovery-*/
+*.log
+discovery.log
+
+# AWS Credentials and Config
+.aws/
+aws-credentials
+.env.local
+
+# Node.js Dependencies
+node_modules/
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.temp
+.DS_Store
+
+# Output Files
+*.json
+*.csv
+*.xlsx
+*.html
+!requirements.txt
+!package.json
+
+# IDE Files
+.idea/
+*.swp
+*.swo
+*~
+
+# OS Files
+Thumbs.db
+desktop.ini
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Generated/Temporary Scripts from Development
+CONSOLIDATED_UPDATE.py
+FINAL_SUMMARY.py
+SUCCESS.py
+demo_json_fix.py
+example_usage.py
+temp_clean.py
+test_json_parsing.py
+test_syntax.py
+JSON_PARSING_FIX.md
+README_INDIVIDUAL_DESCRIPTIONS.md
+.env
