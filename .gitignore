@@ -192,9 +192,11 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
-CLAUDE.md
-.claude/
-.vscode/
+# Keep specific files but ignore their directories otherwise
+.claude/*
+!.claude/settings.local.json
+.vscode/*
+!.vscode/launch.json
 
 # AWS Discovery Tool Output
 aws-discovery-*/
@@ -249,4 +251,6 @@ test_json_parsing.py
 test_syntax.py
 JSON_PARSING_FIX.md
 README_INDIVIDUAL_DESCRIPTIONS.md
-.env
+ERROR_HANDLING_IMPROVEMENTS.md
+GENERAL_AWS_SERVICE_SUMMARY.md
+CLAUDE.md
