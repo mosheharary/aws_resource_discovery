@@ -506,7 +506,6 @@ AWS_SESSION_TOKEN=xxxxxxxxxxxxxxxxxx" required></textarea>
                         <input type="text" id="filter" name="filter" placeholder="e.g., ec2, s3, lambda">
                         <div class="help-text">Optional: Filter by specific AWS service</div>
                     </div>
-
                     <div class="form-group">
                         <label for="exclude">Exclude Resource Types</label>
                         <textarea id="exclude" name="exclude" rows="3" placeholder="AWS::S3::Bucket, AWS::EC2::Instance, AWS::IAM::User, AWS::Lambda::Version"></textarea>
