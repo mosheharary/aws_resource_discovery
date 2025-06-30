@@ -27,7 +27,13 @@ COPY requirements.txt ./
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy application files
-COPY aws_discovery_2_neo4j.py ./
+COPY main.py ./
+COPY core/ ./core/
+COPY services/ ./services/
+COPY graph/ ./graph/
+COPY exporters/ ./exporters/
+COPY utils/ ./utils/
+COPY config/ ./config/
 COPY server.js ./
 COPY LICENSE.md ./
 COPY README.md ./

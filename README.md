@@ -1,6 +1,6 @@
-# AWS Comprehensive Resource Discovery Tool
+# AWS Comprehensive Resource Discovery Tool - Modular Architecture
 
-A powerful tool for discovering and cataloging ALL AWS resources across 600+ resource types using AWS Cloud Control API. Features parallel processing, Neo4j graph database integration, and **Claude Desktop integration through Neo4j MCP Server** for natural language querying of your AWS infrastructure.
+A powerful, **modular** tool for discovering and cataloging ALL AWS resources across 600+ resource types using AWS Cloud Control API. Redesigned with object-oriented architecture for easy service management and debugging. Features parallel processing, Neo4j graph database integration, and **Claude Desktop integration through Neo4j MCP Server** for natural language querying of your AWS infrastructure.
 
 ## 🚀 **Featured Integration: Claude Desktop + Neo4j MCP Server**
 
@@ -28,17 +28,46 @@ This tool discovers AWS resources at scale using:
 - **Neo4j Graph Database**: Stores discovered resources with relationships and cross-account connectivity mapping
 - **Web Interface**: User-friendly form for configuration and real-time progress monitoring
 
-## Architecture
+## 🏗️ **New Modular Architecture**
+
+### **Object-Oriented Design Benefits**
+- ✅ **Easy Service Management**: Add/remove AWS services with simple class registration
+- ✅ **Debug-Friendly**: Individual service logging and error handling  
+- ✅ **Maintainable**: Clear separation of concerns and single responsibility
+- ✅ **Extensible**: Simple registration pattern for new services
+- ✅ **Testable**: Each component can be individually tested
 
 ### Core Components
 
-1. **aws_discovery_2_neo4j.py**: Main discovery engine
-   - Parallel resource discovery using ThreadPoolExecutor
-   - Service-specific API calls for detailed resource information
-   - Neo4j integration with relationship mapping
-   - Multiple export formats (JSON, CSV, Excel, HTML)
+1. **main.py**: CLI entry point with comprehensive argument handling
+   - Enhanced command-line interface with validation
+   - Service registry integration
+   - Configuration management
 
-2. **server.js**: Express web server
+2. **core/**: Foundation modules
+   - `discovery_engine.py`: Main orchestration engine
+   - `base_service.py`: Abstract base class for all AWS services
+   - `resource_info.py`: Resource data model with validation
+   - `config.py`: Configuration management with .env integration
+
+3. **services/**: Modular AWS service implementations
+   - `service_registry.py`: Service registration and factory pattern
+   - `ec2_service.py`: EC2-specific discovery (80+ resource types)
+   - `s3_service.py`: S3-specific discovery (22+ resource types) 
+   - `iam_service.py`: IAM-specific discovery (15+ resource types)
+   - `general_aws_service.py`: All remaining 600+ resource types
+
+4. **graph/**: Neo4j database operations
+   - `neo4j_client.py`: Connection management and graph operations
+
+5. **exporters/**: Modular export system
+   - `base_exporter.py`: Abstract exporter pattern
+   - `json_exporter.py`: JSON export with individual descriptions
+
+6. **utils/**: Shared utilities
+   - `logging_setup.py`: Centralized logging with service-specific loggers
+
+7. **server.js**: Express web server (updated for new architecture)
    - HTML form interface for configuration
    - Real-time streaming of discovery progress
    - AWS credential parsing and environment setup
@@ -46,11 +75,13 @@ This tool discovers AWS resources at scale using:
 
 ### Discovery Process
 
-1. **Resource Type Enumeration**: Iterates through 600+ AWS resource types
-2. **Parallel Discovery**: Uses configurable worker threads for efficient API calls
-3. **Service-Specific Enhancement**: Calls specific AWS APIs for detailed resource properties
-4. **Graph Database Population**: Creates nodes and relationships in Neo4j
-5. **Cross-Account Analysis**: Detects and maps connectivity between AWS accounts
+1. **Service Registration**: Auto-registration of AWS service discovery classes
+2. **Resource Type Enumeration**: Each service manages its own resource types
+3. **Parallel Discovery**: Configurable worker threads with service-level parallelism
+4. **Service-Specific Enhancement**: Individual service implementations with enhanced APIs
+5. **Graph Database Population**: Modular Neo4j client with relationship mapping
+6. **Cross-Account Analysis**: Automated detection of multi-account connectivity
+7. **Modular Export**: Pluggable export system with multiple format support
 
 ## AWS APIs Used
 
@@ -541,6 +572,7 @@ Configure AWS credentials using one of these methods:
    - **Neo4j Settings**: Database URL and password (no default values)
    - **Workers**: Number of parallel threads (1-50, no default value)
    - **Service Filter**: Optional service filtering (e.g., "ec2", "s3")
+   - **Exclude Resource Types**: Optional comma-separated list of AWS resource types to exclude (e.g., "AWS::S3::Bucket, AWS::EC2::Instance")
    - **Reset Graph**: Clear existing data before discovery (unchecked by default)
    - **Individual Descriptions**: Generate detailed resource files (unchecked by default)
 
@@ -548,67 +580,147 @@ Configure AWS credentials using one of these methods:
 
 5. **Monitor progress**: Real-time output stream shows discovery progress
 
-### Command Line Interface
+### Command Line Interface (New Modular Version)
+
+#### List Available Services
+```bash
+python main.py --list-services
+```
 
 #### Basic Discovery
 ```bash
-python aws_discovery_2_neo4j.py --region us-east-1
+python main.py --region us-east-1
 ```
 
-#### High Performance with Filtering
+#### High Performance with Service Filtering
 ```bash
-python aws_discovery_2_neo4j.py \
+python main.py \
   --region us-east-1 \
   --max-workers 20 \
   --filter ec2 \
-  --individual-descriptions \
-  --description-workers 10
+  --individual-descriptions
+```
+
+#### Exclude Specific Resource Types
+```bash
+python main.py \
+  --region us-east-1 \
+  --exclude "AWS::S3::Bucket" "AWS::EC2::Instance" "AWS::IAM::User"
+```
+
+#### Combined Filtering and Exclusion
+```bash
+python main.py \
+  --region us-east-1 \
+  --filter lambda \
+  --exclude "AWS::Lambda::Version" "AWS::Lambda::Alias" \
+  --max-workers 15
 ```
 
 #### Full Graph Database Integration
 ```bash
-python aws_discovery_2_neo4j.py \
+python main.py \
   --region eu-west-1 \
   --update-graph \
   --reset-graph \
-  --graph-db-password mypassword \
+  --graph-db-password Mh123456 \
   --account-name "Production-Account" \
   --individual-descriptions
 ```
 
-#### Multi-format Export
+#### Multi-format Export (JSON default, others coming soon)
 ```bash
-python aws_discovery_2_neo4j.py \
+python main.py \
   --region us-west-2 \
   --profile production \
-  --output-formats json csv excel html
+  --output-formats json
 ```
 
-#### Web Interface Mode (Disable Progress Bars)
+#### Service-Specific Discovery
 ```bash
-python aws_discovery_2_neo4j.py \
-  --region us-east-1 \
-  --no-progress \
-  --update-graph
+# Discover only S3 resources
+python main.py --region us-east-1 --filter s3
+
+# Discover only IAM resources (global)
+python main.py --region us-east-1 --filter iam
+
+# Discover only EC2 resources with enhanced logging
+python main.py --region us-east-1 --filter ec2 --log-level DEBUG
 ```
 
-### Command Line Arguments
+### Command Line Arguments (New Modular Version)
 
 | Argument | Description | Default |
 |----------|-------------|---------|
 | `--region` | AWS region for discovery | Required |
 | `--profile` | AWS credential profile | Default profile |
 | `--max-workers` | Parallel discovery workers | 10 |
-| `--filter` | Service filter (e.g., "ec2") | None |
+| `--filter` | Service filter (e.g., "ec2", "s3", "iam") | None |
+| `--exclude` | Exclude specific resource types | None |
 | `--individual-descriptions` | Generate detailed files | False |
 | `--description-workers` | Parallel description workers | 5 |
-| `--output-formats` | Export formats | ["json"] |
+| `--output-formats` | Export formats (json, csv, excel, html) | ["json"] |
 | `--update-graph` | Update Neo4j database | False |
 | `--reset-graph` | Clear graph before update | False |
 | `--graph-db-url` | Neo4j connection URL | "localhost:7687" |
-| `--graph-db-password` | Neo4j password | "password" |
-| `--account-name` | Friendly account name | AWS account ID |
-| `--no-progress` | Disable progress bars | False |
+| `--graph-db-user` | Neo4j username | "neo4j" |
+| `--graph-db-password` | Neo4j password | "Mh123456" |
+| `--account-name` | Friendly account name | Auto-generated |
+| `--log-level` | Overall logging level | "INFO" |
+| `--console-log-level` | Console logging level | "INFO" |
+| `--file-log-level` | File logging level | "DEBUG" |
+| `--list-services` | List available services and exit | False |
+
+### Available Services (--filter options)
+
+| Service | Description | Resource Types |
+|---------|-------------|----------------|
+| `ec2` | Amazon EC2 resources | 80+ types (instances, VPCs, subnets, etc.) |
+| `s3` | Amazon S3 resources | 22+ types (buckets, access points, etc.) |
+| `iam` | AWS IAM resources | 15+ types (roles, users, policies, etc.) |
+| `general` | All other AWS services | 600+ types (Lambda, RDS, CloudFormation, etc.) |
+
+### Configuration File for AWS Resource Types
+
+The tool now uses a configuration file approach for managing AWS resource types, making it easier to maintain and customize.
+
+#### Configuration File Location
+```
+config/aws_resource_types.json
+```
+
+#### Configuration File Format
+```json
+{
+  "aws_resource_types": [
+    "AWS::EC2::Instance",
+    "AWS::S3::Bucket",
+    "AWS::Lambda::Function",
+    "AWS::RDS::DBInstance",
+    "..."
+  ]
+}
+```
+
+#### Benefits of Configuration File Approach
+- **Easy Maintenance**: Update resource types without modifying code
+- **Customizable**: Add or remove resource types as needed
+- **Centralized**: Single source of truth for all AWS resource types
+- **Version Control Friendly**: Track changes to resource type lists
+- **Fallback Support**: Automatically falls back to minimal list if config file is missing
+
+#### Customizing Resource Types
+1. **Edit the configuration file**: Modify `config/aws_resource_types.json`
+2. **Add new resource types**: Include newly released AWS resource types
+3. **Remove unnecessary types**: Exclude resource types you don't need
+4. **Use with --exclude**: Combine with command-line exclusions for fine-grained control
+
+#### Working with Exclusions
+The `--exclude` option works in combination with the configuration file:
+1. Load all resource types from configuration file
+2. Apply service filter if specified (`--filter`)
+3. Remove excluded types specified with `--exclude`
+4. Proceed with discovery of remaining types
 
 ## Output Structure
 
@@ -689,17 +801,66 @@ aws-discovery-YYYYMMDD-HHMMSS/
    - Use service filtering
    - Process regions separately
 
-### Debug Mode
+### Debug Mode (New Modular Version)
 
 Enable detailed logging:
 ```bash
-python aws_discovery_2_neo4j.py --region us-east-1 --verbose
+python main.py --region us-east-1 --log-level DEBUG
 ```
 
-For web interface troubleshooting, progress bars are automatically disabled:
+Service-specific debugging:
 ```bash
-python aws_discovery_2_neo4j.py --region us-east-1 --no-progress --verbose
+# Debug only EC2 service
+python main.py --region us-east-1 --filter ec2 --log-level DEBUG
+
+# Debug with different console and file levels
+python main.py --region us-east-1 --console-log-level WARNING --file-log-level DEBUG
 ```
+
+## 🎯 **Benefits of New Modular Architecture**
+
+### **Easy Service Management**
+```python
+# Adding a new AWS service is simple:
+@register_service
+class LambdaService(BaseAWSService):
+    def get_service_name(self) -> str:
+        return "lambda"
+    
+    def get_supported_resource_types(self) -> List[str]:
+        return ["AWS::Lambda::Function", "AWS::Lambda::Layer"]
+    
+    def discover_resources(self) -> List[ResourceInfo]:
+        # Service-specific implementation
+        pass
+```
+
+### **Debug-Friendly Design**
+- **Individual Service Logging**: Each service has its own logger (`aws_discovery.ec2`, `aws_discovery.s3`, etc.)
+- **Service Statistics**: Per-service metrics and performance tracking
+- **Error Isolation**: Service failures don't stop other services
+- **Skip Pattern Management**: Service-specific resource type skipping
+
+### **Service Registry Pattern**
+```bash
+# List all registered services
+python main.py --list-services
+
+# Output:
+# 📋 Registered AWS Services:
+#    Total Services: 4
+#    Available Services:
+#      • ec2
+#      • general  
+#      • iam
+#      • s3
+```
+
+### **Extensible Architecture**
+- **Plugin System**: New services automatically register with `@register_service` decorator
+- **Base Class Benefits**: All services inherit common functionality
+- **Configuration Management**: Centralized config with service-specific overrides
+- **Export System**: Modular exporters for different output formats
 
 ## Example Cypher Queries
 
@@ -797,6 +958,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ### 🔍 **Core Discovery Capabilities**
 - **600+ AWS Resource Types**: Comprehensive coverage using AWS Cloud Control API
+- **Configurable Resource Types**: JSON configuration file for easy maintenance and customization
+- **Resource Exclusion**: Exclude specific resource types from discovery via `--exclude` option
 - **Parallel Processing**: Configurable multi-threaded discovery (1-50 workers)
 - **Service-Specific APIs**: Enhanced details for 15+ services (EC2, S3, Lambda, RDS, etc.)
 - **Cross-Account Analysis**: Automatic detection of multi-account connectivity
@@ -847,7 +1010,36 @@ For issues and questions:
 
 ---
 
-**Latest Version**: Enhanced with **Claude Desktop integration via Neo4j MCP Server** for natural language AWS infrastructure queries, plus web interface improvements, Docker security updates, and comprehensive management scripts.
+**Latest Version**: **Completely redesigned with modular object-oriented architecture** for easy service management and debugging. Features **Claude Desktop integration via Neo4j MCP Server** for natural language AWS infrastructure queries, plus web interface improvements, Docker security updates, and comprehensive management scripts.
+
+## 🔄 **Migration from Old to New Architecture**
+
+### **What Changed**
+- **Monolithic File**: `aws_discovery_2_neo4j.py` (3,571 lines) → **Modular Architecture**: Multiple focused modules
+- **Single Class**: One massive class → **Service-Based Classes**: Individual service implementations
+- **Hard to Debug**: Single error log → **Service-Specific Logging**: Per-service debug capabilities
+- **Hard to Extend**: Modify one large file → **Plugin System**: Simple service registration
+
+### **Backward Compatibility**
+- ✅ **Same Output**: Identical JSON structure and Neo4j schema
+- ✅ **Same Web Interface**: UI unchanged, backend points to new `main.py`
+- ✅ **Same Docker Support**: Updated Dockerfile and docker-compose.yml
+- ✅ **Same CLI Arguments**: Most arguments preserved with enhancements
+
+### **Migration Commands**
+```bash
+# Old command
+python aws_discovery_2_neo4j.py --region us-east-1 --update-graph
+
+# New equivalent command  
+python main.py --region us-east-1 --update-graph
+
+# List available services (new feature)
+python main.py --list-services
+
+# Service-specific discovery (enhanced)
+python main.py --region us-east-1 --filter ec2 --log-level DEBUG
+```
 
 **Quick Commands Reference**:
 ```bash
@@ -856,10 +1048,11 @@ For issues and questions:
 ./run-docker-compose.sh web
 ./run-docker-compose.sh neo4j
 
-# Docker with Shell Script
+# Docker with Shell Script  
 ./run-aws-list-resources.sh -- --region us-east-1
 
-# Standalone
-python aws_discovery_2_neo4j.py --region us-east-1 --update-graph --no-progress
+# Standalone (New Modular Version)
+python main.py --region us-east-1 --update-graph
+python main.py --list-services
 node server.js
 ```

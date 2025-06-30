@@ -506,6 +506,11 @@ AWS_SESSION_TOKEN=xxxxxxxxxxxxxxxxxx" required></textarea>
                         <input type="text" id="filter" name="filter" placeholder="e.g., ec2, s3, lambda">
                         <div class="help-text">Optional: Filter by specific AWS service</div>
                     </div>
+                    <div class="form-group">
+                        <label for="exclude">Exclude Resource Types</label>
+                        <textarea id="exclude" name="exclude" rows="3" placeholder="AWS::S3::Bucket, AWS::EC2::Instance, AWS::IAM::User, AWS::Lambda::Version"></textarea>
+                        <div class="help-text">Optional: Comma-separated list of AWS resource types to exclude from discovery. Useful for skipping resource types that aren't needed or take too long to scan.</div>
+                    </div>
                 </div>
 
                 <div class="form-grid">
@@ -724,6 +729,7 @@ app.post('/run-discovery', (req, res) => {
         graphDbPassword,
         maxWorkers,
         filter,
+        exclude,
         resetGraph,
         individualDescriptions
     } = req.body;
@@ -776,14 +782,15 @@ app.post('/run-discovery', (req, res) => {
 
     // Build command arguments for Python script
     const args = [
-        'aws_discovery_2_neo4j.py',
+        'main.py',
         '--region', region,
         '--update-graph',
         '--graph-db-url', graphDbUrl,
         '--graph-db-password', graphDbPassword,
-        '--no-progress',  // Disable progress bars for web interface
-        '--account-name', accountName,
-        '--max-workers', maxWorkers.toString()
+        '--account-name', accountName || `Account-${Date.now()}`,
+        '--max-workers', (maxWorkers || 10).toString(),
+        '--log-level', 'INFO',
+        '--console-log-level', 'INFO'
     ];
 
     if (resetGraph) {
@@ -796,6 +803,18 @@ app.post('/run-discovery', (req, res) => {
 
     if (filter && filter.trim()) {
         args.push('--filter', filter.trim());
+    }
+
+    if (exclude && exclude.trim()) {
+        // Parse comma-separated resource types and add them as individual arguments
+        // Expected format: AWS::ServiceName::ResourceType (e.g., AWS::S3::Bucket)
+        const excludeTypes = exclude.split(',')
+            .map(type => type.trim())
+            .filter(type => type.length > 0 && type.includes('AWS::'));
+        
+        if (excludeTypes.length > 0) {
+            args.push('--exclude', ...excludeTypes);
+        }
     }
 
     // Configure response for streaming output

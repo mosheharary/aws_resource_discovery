@@ -192,9 +192,8 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
-CLAUDE.md
-.claude/
-.vscode/
+.claude/*
+.vscode/*
 
 # AWS Discovery Tool Output
 aws-discovery-*/
@@ -251,4 +250,5 @@ JSON_PARSING_FIX.md
 README_INDIVIDUAL_DESCRIPTIONS.md
 ERROR_HANDLING_IMPROVEMENTS.md
 GENERAL_AWS_SERVICE_SUMMARY.md
+CLAUDE.md
 .env
