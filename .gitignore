@@ -252,3 +252,9 @@ ERROR_HANDLING_IMPROVEMENTS.md
 GENERAL_AWS_SERVICE_SUMMARY.md
 CLAUDE.md
 .env
+aws_discovery_2_neo4j.py
+services/general_aws_service_old.py
+show_resource_coverage.py
+test_general_service.py
+validate_service_structure.py
+
