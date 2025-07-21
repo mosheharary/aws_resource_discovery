@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aws-discovery-web
+spec:
+  selector:
+    matchLabels:
+      app: aws-discovery-web
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: aws-discovery-web
+    spec:
+      containers:
+        - name: aws-discovery-web
+          image: mosheharary/aws_resource_discovery:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: NEO4J_URI
+              valueFrom:
+                secretKeyRef:
+                  name: neo4j-secret
+                  key: NEO4J_URI
+            - name: NEO4J_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: neo4j-secret
+                  key: NEO4J_USERNAME
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neo4j-secret
+                  key: NEO4J_PASSWORD
+          volumeMounts:
+            - name: results
+              mountPath: /app/results
+      volumes:
+        - name: results
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aws-discovery-web
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: web
+  selector:
+    app: aws-discovery-web
+
